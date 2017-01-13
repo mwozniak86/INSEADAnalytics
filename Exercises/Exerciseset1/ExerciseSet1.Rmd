@@ -2,6 +2,7 @@
 ---
 title: "Exercise Set 1"
 author: "T. Evgeniou"
+runtime: shiny
 output: html_document
 ---
 
@@ -138,13 +139,14 @@ We can also transpose the matrix of returns to create a new "horizontal" matrix.
 
 <br>
 `r transposedData = t(StockReturns)`
-1. One can use command 'nrow(transposedData)' that gives number of rows: `r nrow(transposedData)` and command 'ncol(transposedData)' that gives number of columns: `r ncol(transposedData)`
+1. One can use command `nrow(transposedData)` that gives number of rows: `r nrow(transposedData)` and command `ncol(transposedData)` that gives number of columns: `r ncol(transposedData)`
 <br>
 2. 
-<br>
-<br>
-
-<hr>
+```{r echo=FALSE, comment=NA, warning=FALSE, message=FALSE,results='asis',fig.align='center', fig=TRUE}
+t_portfolio = apply(transposedData,2,mean)
+names(t_portfolio) <- colnames(transposedData)
+pnl_plot(t_portfolio)
+```
 <hr>
 
 ### Part III: Reproducibility and Customization
@@ -156,12 +158,11 @@ This is an important step and will get you to think about the overall process on
 1. We want to re-do all this analysis with data since 2001-01-01: what change do we need to make in the code (hint: all you need to change is one line - exactly 1 number! - in data.R file), and how can you get the new exercise set with the data since 2001-01-01? 
 2. *(Extra Exercise)*  Can you get the returns of a few companies and plot the returns of an equal weighted portfolio with those companies during some period you select? 
 
-**Your Answers here:**
 <br>
+1. In dataSet1.R file one needs to change startDate variable (line 9) to "2005-01-01"
 <br>
+2. One would need edit variable `mytickers` in the file `dataSet1.R`, e.g. add YHOO, GOOG, etc.
 <br>
-<br>
-
 <hr>
 <hr>
 
@@ -190,8 +191,8 @@ Try it!
 myData + StockReturns[1:40,]
 ```
 
-**Your Answers here:**
 <br>
+1. As such a command `sum(myData != StockReturns[1:20,])` does not make any sense because it compares two different matrices (with different dimensions). To make sense out of it, one would need to set a proper separator (i.e, ',' instead of ';' during CSV file load). Then, few manipulations need to be made with myData variable to makek sure that we compare "apples to apples", i.e. matrices with similar dimensions. To do it, myData needs to set date as new row names (by using `rownames(myData) <- myData[,1]` command) and drop first column (by using `myData <- myData[,-1]` command).
 <br>
 <br>
 <br>
@@ -203,13 +204,28 @@ myData + StockReturns[1:40,]
 
 Can you now load another dataset from some CSV file and report some basic statistics about that data? 
 
+```{r eval = TRUE, echo=TRUE, comment=NA, warning=FALSE, message=FALSE,results='asis'}
+y <- array(1:100,dim=c(10,10))
+write.csv(y, file = "extra_question.csv", row.names = TRUE, col.names = TRUE)
+extraData <- read.csv(file = "extra_question.csv", header = TRUE, sep=",")
+rownames(extraData) <- extraData[,1]
+extraData <- extraData[,-1]
+```
+<br>
+Dimensions: `r dim(extraData)`
+<br>
+Columns: `r ncol(extraData)`
+<br>
+Rows: `r nrow(extraData)`
+<br>
+Sum of all values: `r sum(extraData)`
 <br>
 
 ### Creating Interactive Documents
 
 Finally, just for fun, one can add some interactivity in the report using [Shiny](http://rmarkdown.rstudio.com/authoring_shiny.html).All one needs to do is set the eval flag of the code chunk below (see the .Rmd file) to "TRUE", add the line "runtime: shiny" at the very begining of the .Rmd file, make the markdown output to be "html_document", and then press "Run Document". 
 
-```{r, eval=FALSE, echo = TRUE}
+```{r, eval=TRUE, echo = TRUE}
 sliderInput("startdate", "Starting Date:", min = 1, max = length(portfolio), 
             value = 1)
 sliderInput("enddate", "End Date:", min = 1, max = length(portfolio), 
