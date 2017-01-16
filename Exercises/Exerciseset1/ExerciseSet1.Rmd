@@ -10,7 +10,7 @@ output: html_document
 <br>
 
 The purpose of this exercise is to become familiar with:
-
+for 
 1. Basic statistics functions in R;
 2. Simple matrix operations;
 3. Simple data manipulations; 
@@ -187,16 +187,32 @@ Try it!
 1. Once you write and read the data as described above, what happens when you run this command in the console of the RStudio: `sum(myData != StockReturns[1:20,])`
 2. *(Extra exercise)* What do you think will happen if you now run this command, and why:  
 
-```{r eval = FALSE, echo=TRUE}
+```{r eval = FALSE, echo=TRUE, warning=TRUE, message=TRUE}
+
+result <- sum(myData != StockReturns[1:20,])
+print(result)
+
 myData + StockReturns[1:40,]
+
+myDataMatrix <- matrix(nrow = 20, ncol = 2)
+for (i in 1:2) {
+  for (j in 1:20) {
+    myDataMatrix[j,i] = myData[j,i]
+  }
+}
+
+print(myDataMatrix)
+
+myDataMatrix + StockReturns[1:40,] # will result in error as these two matrices have different dimensions
+
 ```
 
 <br>
-1. As such a command `sum(myData != StockReturns[1:20,])` does not make any sense because it compares two different matrices (with different dimensions). To make sense out of it, one would need to set a proper separator (i.e, ',' instead of ';' during CSV file load). Then, few manipulations need to be made with myData variable to makek sure that we compare "apples to apples", i.e. matrices with similar dimensions. To do it, myData needs to set date as new row names (by using `rownames(myData) <- myData[,1]` command) and drop first column (by using `myData <- myData[,-1]` command).
+1. As such a command `sum(myData != StockReturns[1:20,])` does not make any sense because it compares two different data structures (with different dimensions). To make sense out of it, one would need to set a proper separator (i.e, ',' instead of ';' during CSV file load). Then, few manipulations need to be made with myData variable to makek sure that we compare "apples to apples", i.e. matrices with similar dimensions. To do it, myData needs to set date as new row names (by using `rownames(myData) <- myData[,1]` command) and drop first column (by using `myData <- myData[,-1]` command). Lastly, one needs to convert myData to matrix (instead of data.frame) for example by using two for loops.
 <br>
 <br>
+2. Once fixes mentioned above are in place `myData + StockReturns[1:40,]` will result in error simply because those two arrays are non-conformable (`Error in myDataMatrix + StockReturns[1:40, ] : non-conformable arrays`)
 <br>
-
 <hr>
 <hr>
 
