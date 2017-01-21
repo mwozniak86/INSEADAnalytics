@@ -186,7 +186,9 @@ Global factors, such as USA performance (1st) or precious metals prices (9th). S
 ```{r echo=TRUE, eval=TRUE}
 for (x in 1:10) {
   y <- which(show_data[,x]>.5)
-  print(rownames(show_data)[y], scale = FALSE)
+  a <- rownames(show_data)[y]
+
+  print(toString(a))
 }
 ```
 
@@ -201,14 +203,14 @@ Variance_Explained_Table<-Variance_Explained_Table_results$eig
 colnames(Variance_Explained_Table)<-c("Eigenvalue", 
   "Pct of explained variance", "Cumulative pct of explained variance")
 show_data = round(Variance_Explained_Table, 2)
-#iprint.df(show_data)
+iprint.df(show_data)
 ```
 
 ```{r}
 eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
 df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
 colnames(df) <- c("eigenvalues", "components", "abline")
-#iplot.df(melt(df, id="components"))
+iplot.df(melt(df, id="components"))
 ```
 
 ```{r echo=TRUE, tidy=TRUE}
@@ -225,15 +227,9 @@ Rotated_Factors[abs(Rotated_Factors) < 0.3]<-NA
 
 ```{r}
 show_data <- Rotated_Factors 
-#iprint.df(show_data, scale=TRUE)
-```
+iprint.df(show_data, scale=TRUE)
 
-**Assets in bull years**
-```{r echo=TRUE, eval=TRUE}
-for (x in 1:10) {
-  y <- which(show_data[,x]>.5)
-  print(rownames(show_data)[y], scale = FALSE)
-}
+show_data_bull <- show_data
 ```
 
 **Financial crisis**
@@ -249,14 +245,14 @@ colnames(Variance_Explained_Table)<-c("Eigenvalue",
 
 ```{r}
 show_data = round(Variance_Explained_Table, 2)
-#iprint.df(show_data)
+iprint.df(show_data)
 ```
 
 ```{r}
 eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
 df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
 colnames(df) <- c("eigenvalues", "components", "abline")
-#iplot.df(melt(df, id="components"))
+iplot.df(melt(df, id="components"))
 ```
 
 ```{r echo=TRUE, tidy=TRUE}
@@ -273,16 +269,39 @@ Rotated_Factors[abs(Rotated_Factors) < 0.3]<-NA
 
 ```{r}
 show_data <- Rotated_Factors 
-#iprint.df(show_data, scale=TRUE)
+iprint.df(show_data, scale=TRUE)
+```
+
+**Answer 5:**
+
+**Assets in bull years**
+
+```{r echo=FALSE, eval=TRUE}
+for (x in 1:10) {
+  y <- which(show_data_bull[,x]>.5)
+  a <- rownames(show_data_bull)[y]
+
+  cat(x, " ")
+  print(toString(a))
+  cat("\n")
+}
 ```
 
 **Assets in bear years**
-```{r echo=TRUE, eval=TRUE}
+
+```{r echo=FALSE, eval=TRUE}
 for (x in 1:10) {
   y <- which(show_data[,x]>.5)
-  print(rownames(show_data)[y], scale = FALSE)
+  a <- rownames(show_data)[y]
+
+  cat(x, " ")
+  print(toString(a))
+  cat("\n")
+
 }
 ```
+
+There are some differences between bullish and bearish years. For example, in bearish years importance of agriculture commodities increased (from 7 to 3). On top of that, importance of Euro decreased. 
 
 
 # A Simple Futures Trend Following Strategy
