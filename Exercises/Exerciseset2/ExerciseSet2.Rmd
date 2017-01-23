@@ -82,14 +82,14 @@ There are many ways to get futures data. For example, one can use  the [Quandl p
 
 Let's load the data and see what we have. 
 
-```{r echo=TRUE}
+```{r echo=FALSE, warning=FALSE}
 suppressPackageStartupMessages(source("helpersSet2.R"))
 load("data/FuturesTrendFollowingData.Rdata")
 ```
 
 We have data from `r head(rownames(futures_data),1)` to `r tail(rownames(futures_data),1)` of daily returns for the following `r ncol(futures_data)` futures: 
 
-```{r echo=TRUE, results='markup'}
+```{r echo=FALSE, results='markup'}
 print(colnames(futures_data))
 ```
 
@@ -106,7 +106,7 @@ We see quite high correlations among some of the futures. Does it make sense? Wh
 
 Given such high correlations, we can try to see whether there are some "principal components" (see [reading on dimensionality reduction](http://inseaddataanalytics.github.io/INSEADAnalytics/CourseSessions/Sessions23/FactorAnalysisReading.html)). This analysis can also indicate whether all futures (the global economy!) are driven by some common "factors" (let's call them **"risk factors"**). 
 
-```{r echo=TRUE}
+```{r echo=FALSE}
 Variance_Explained_Table_results<-PCA(futures_data, graph=FALSE)
 Variance_Explained_Table<-Variance_Explained_Table_results$eig
 colnames(Variance_Explained_Table)<-c("Eigenvalue", 
@@ -120,7 +120,7 @@ iprint.df(show_data)
 
 Here is the scree plot (see Sessions 3-4 readings):
 
-```{r echo=TRUE}
+```{r echo=FALSE}
 eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
 ```
 
@@ -132,7 +132,7 @@ iplot.df(melt(df, id="components"))
 
 Let's now see how the 20 first (**rotated**) principal components look like. Let's also use the *rotated* factors (note that these are not really the "principal component", as explained in the [reading on dimensionality reduction](http://inseaddataanalytics.github.io/INSEADAnalytics/CourseSessions/Sessions23/FactorAnalysisReading.html)) and not show any numbers less than 0.3 in absolute value, to avoid cluttering. 
 
-```{r echo=TRUE, tidy=TRUE}
+```{r echo=FALSE, tidy=TRUE}
 corused = cor(futures_data[,apply(futures_data!=0,2,sum) > 10, drop=F])
 Rotated_Results<-principal(corused, nfactors=20, rotate="varimax",score=TRUE)
 Rotated_Factors<-round(Rotated_Results$loadings,2)
@@ -157,18 +157,150 @@ iprint.df(show_data, scale=TRUE)
 4. Can you now generate the principal components and scree plot using only: a) the pre-crisis bull market years (e.g. only using the data between November 1, 2002, and October 1, 2007)?  b) the financial crisis years (e.g. only using the data between October 1, 2007 and  March 1, 2009), (Hint: you can select subsets of the data using for example the command `crisis_data` `=` `futures_data[` `as.Date(rownames(futures_data))` `>` `"2007-10-01"` `&` `as.Date(rownames(futures_data))` `<` `"2009-03-01"` `,` `]`)
 5. Based on your analysis in question 3, please discuss any differences you observe about the futures returns during  bull and bear markets.  What implications may these results have? What do the results imply about how assets are correlated during bear years compared to bull years? 
 
-**Answers**
+**Answer 1:**
+```{r echo=TRUE, eval=TRUE}
+i <- 0
+for (x in Variance_Explained_Table[,3]) {
+  i <- i+1
+    if (x > 50) {
+      break
+  }
+}
+i
+```
 
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
+
+**Answer 2:**
+
+```{r echo=TRUE, eval=TRUE}
+for (x in which(show_data[,"comp 1"] >= 0.0)) {
+  name <- rownames(show_data)[x]
+  cat(name, " max: ", round(max(futures_data[,name]),3), "<br>")
+}
+```
+
+**Answer 3:**
+
+Global factors, such as USA performance (1st) or precious metals prices (9th). See below.
+```{r echo=TRUE, eval=TRUE}
+for (x in 1:10) {
+  y <- which(show_data[,x]>.5)
+  a <- rownames(show_data)[y]
+
+  print(toString(a))
+}
+```
+
+**Answer 4:**
+
+**Pre-crisis**
+```{r echo=FALSE}
+precrisis_data <- futures_data[as.Date(rownames(futures_data))>'2001-11-01' & as.Date(rownames(futures_data))<'2007-10-01',]
+
+Variance_Explained_Table_results<-PCA(precrisis_data, graph=FALSE)
+Variance_Explained_Table<-Variance_Explained_Table_results$eig
+colnames(Variance_Explained_Table)<-c("Eigenvalue", 
+  "Pct of explained variance", "Cumulative pct of explained variance")
+show_data = round(Variance_Explained_Table, 2)
+iprint.df(show_data)
+```
+
+```{r}
+eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+iplot.df(melt(df, id="components"))
+```
+
+```{r echo=FALSE, tidy=TRUE}
+corused = cor(precrisis_data[,apply(precrisis_data!=0,2,sum) > 10, drop=F])
+Rotated_Results<-principal(corused, nfactors=20, rotate="varimax",score=TRUE)
+Rotated_Factors<-round(Rotated_Results$loadings,2)
+Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
+colnames(Rotated_Factors)<-paste("comp",1:ncol(Rotated_Factors),sep=" ")
+
+sorted_rows <- sort(Rotated_Factors[,1], decreasing = TRUE, index.return = TRUE)$ix
+Rotated_Factors <- Rotated_Factors[sorted_rows,]
+Rotated_Factors[abs(Rotated_Factors) < 0.3]<-NA
+```
+
+```{r}
+show_data <- Rotated_Factors 
+iprint.df(show_data, scale=TRUE)
+
+show_data_bull <- show_data
+```
+
+**Financial crisis**
+
+```{r echo=FALSE}
+crisis_data <- futures_data[as.Date(rownames(futures_data))>'2007-10-01' & as.Date(rownames(futures_data))<'2009-03-01',]
+
+Variance_Explained_Table_results<-PCA(crisis_data, graph=FALSE)
+Variance_Explained_Table<-Variance_Explained_Table_results$eig
+colnames(Variance_Explained_Table)<-c("Eigenvalue", 
+  "Pct of explained variance", "Cumulative pct of explained variance")
+```
+
+```{r}
+show_data = round(Variance_Explained_Table, 2)
+iprint.df(show_data)
+```
+
+```{r}
+eigenvalues  <- Variance_Explained_Table[, "Eigenvalue"]
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+iplot.df(melt(df, id="components"))
+```
+
+```{r echo=FALSE, tidy=TRUE}
+corused = cor(crisis_data[,apply(crisis_data!=0,2,sum) > 10, drop=F])
+Rotated_Results<-principal(corused, nfactors=20, rotate="varimax",score=TRUE)
+Rotated_Factors<-round(Rotated_Results$loadings,2)
+Rotated_Factors<-as.data.frame(unclass(Rotated_Factors))
+colnames(Rotated_Factors)<-paste("comp",1:ncol(Rotated_Factors),sep=" ")
+
+sorted_rows <- sort(Rotated_Factors[,1], decreasing = TRUE, index.return = TRUE)$ix
+Rotated_Factors <- Rotated_Factors[sorted_rows,]
+Rotated_Factors[abs(Rotated_Factors) < 0.3]<-NA
+```
+
+```{r}
+show_data <- Rotated_Factors 
+iprint.df(show_data, scale=TRUE)
+```
+
+**Answer 5:**
+
+There are some differences between bullish and bearish years. For example, in bearish years importance of agriculture commodities increased (from 7 to 3). On top of that, importance of Euro decreased. 
+
+**Assets in bull years**
+
+```{r echo=FALSE, eval=TRUE}
+for (x in 1:10) {
+  y <- which(show_data_bull[,x]>.5)
+  a <- rownames(show_data_bull)[y]
+
+  cat(x, " ")
+  print(toString(a))
+  cat("\n")
+}
+```
+
+**Assets in bear years**
+
+```{r echo=FALSE, eval=TRUE}
+for (x in 1:10) {
+  y <- which(show_data[,x]>.5)
+  a <- rownames(show_data)[y]
+
+  cat(x, " ")
+  print(toString(a))
+  cat("\n")
+
+}
+```
 
 # A Simple Futures Trend Following Strategy
 
@@ -185,10 +317,18 @@ Here is the code:
 
 ```{r echo=TRUE, tidy=TRUE}
 signal_used = 0*futures_data # just initialize the trading signal to be 0
+
 # Take many moving Average (MA) Signals and let them "vote" with their sign (+-1, e.g. long or short vote, for each signal)
 MAfreq<-seq(10,250,by=20)
-for (iter in 1:length(MAfreq))
-  signal_used = signal_used + sign(apply(futures_data,2, function(r) ma(r,MAfreq[iter])))
+
+ for (iter in 1:length(MAfreq)) {
+  d = apply(futures_data,2, function(r) {
+      ma(r,MAfreq[iter])
+    }
+  )
+  signal_used = signal_used + sign(d)
+}
+
 # Now make sure we invest $1 every day (so the sum of the absolute values of the weights is 1 every day)
 signal_used = t(apply(signal_used,1,function(r) {
   res = r  
@@ -197,10 +337,14 @@ signal_used = t(apply(signal_used,1,function(r) {
   res
 }))
 colnames(signal_used) <- colnames(futures_data)
+
 # Now create the returns of the strategy for each futures time series
-strategy_by_future <- scrub(shift(signal_used,2)*futures_data) # signal 2 days ago
+s <- shift(signal_used,2)
+strategy_by_future <- scrub(s*futures_data) # signal 2 days ago
+
 # finally, this is our futures trend following strategy
 trading_strategy = apply(strategy_by_future,1,sum)
+
 names(trading_strategy) <- rownames(futures_data)
 ```
 
@@ -230,16 +374,36 @@ How does this compare with **existing CTA products** such as [this one from Soci
 
 **Answers**
 
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*
+1. The above code calculates effectiveness of used trend following approach. It starts off with creation of array that has the same size as future_data. Then it calculates moving averages of returns in different periods (from 10 to 250 days). Based on that it determines signals of trend. Positive number means that price of given futures rise (negative that it declines). Then it distributes $1 over each futures so that total is $1. It means that futures with negative signal (short signal) are being sold and the ones with positive signal (long signal) are
+being bought. After that, we summarize the data (w/ 2 days shift) and add results up. Then data is plotted.
+
+```{r echo=FALSE, tidy=TRUE}
+signal_used = 0*futures_data # just initialize the trading signal to be 0
+MAfreq<-seq(10,250,by=10)
+ for (iter in 1:length(MAfreq)) {
+  d = apply(futures_data,2, function(r) {
+      ma(r,MAfreq[iter])
+    }
+  )
+  signal_used = signal_used + sign(d)
+}
+signal_used = t(apply(signal_used,1,function(r) {
+  res = r  
+  if ( sum(abs(r)) !=0 )
+    res = r/sum(abs(r))
+  res
+}))
+colnames(signal_used) <- colnames(futures_data)
+s <- shift(signal_used,2)
+strategy_by_future <- scrub(s*futures_data) # signal 2 days ago
+trading_strategy2 = apply(strategy_by_future,1,sum)
+names(trading_strategy2) <- rownames(futures_data)
+```
+
+2. Current returns: `r round(100*sum(trading_strategy),2)`%
+<br>
+Returns after modifcations (`MAfreq<-seq(10,250,by=10)`): `r round(100*sum(trading_strategy2),2)`%
+
 
 # A class competition
 
@@ -260,8 +424,6 @@ iprint.df(show_data)
 ```
 
 As always, **have fun** 
-
-
 
 
 
